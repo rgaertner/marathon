@@ -35,23 +35,28 @@ import scala.concurrent.{ Await, Future, TimeoutException }
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
 
+trait Abdicator {
+  def abdicateLeadership(): Unit
+}
+
 /**
   * Wrapper class for the scheduler
   */
 class MarathonSchedulerService @Inject() (
-    leadershipCoordinator: LeadershipCoordinator,
-    healthCheckManager: HealthCheckManager,
-    @Named(ModuleNames.NAMED_CANDIDATE) candidate: Option[Candidate],
-    config: MarathonConf,
-    frameworkIdUtil: FrameworkIdUtil,
-    @Named(ModuleNames.NAMED_LEADER_ATOMIC_BOOLEAN) leader: AtomicBoolean,
-    appRepository: AppRepository,
-    taskTracker: TaskTracker,
-    driverFactory: SchedulerDriverFactory,
-    system: ActorSystem,
-    migration: Migration,
-    @Named("schedulerActor") schedulerActor: ActorRef,
-    @Named(EventModule.busName) eventStream: EventStream) extends AbstractExecutionThreadService with Leader {
+  leadershipCoordinator: LeadershipCoordinator,
+  healthCheckManager: HealthCheckManager,
+  @Named(ModuleNames.NAMED_CANDIDATE) candidate: Option[Candidate],
+  config: MarathonConf,
+  frameworkIdUtil: FrameworkIdUtil,
+  @Named(ModuleNames.NAMED_LEADER_ATOMIC_BOOLEAN) leader: AtomicBoolean,
+  appRepository: AppRepository,
+  taskTracker: TaskTracker,
+  driverFactory: SchedulerDriverFactory,
+  system: ActorSystem,
+  migration: Migration,
+  @Named("schedulerActor") schedulerActor: ActorRef,
+  @Named(EventModule.busName) eventStream: EventStream)
+    extends AbstractExecutionThreadService with Leader with Abdicator {
 
   import mesosphere.util.ThreadPoolContext.context
 

@@ -9,7 +9,14 @@ import mesosphere.marathon.MarathonSchedulerActor.ScaleApp
 import mesosphere.marathon.api.LeaderInfo
 import mesosphere.marathon.api.v2.json.V2AppUpdate
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.event.{ AppTerminatedEvent, DeploymentFailed, DeploymentSuccess, LocalLeadershipEvent }
+import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskCount
+import mesosphere.marathon.event.{
+  MesosStatusUpdateEvent,
+  AppTerminatedEvent,
+  DeploymentFailed,
+  DeploymentSuccess,
+  LocalLeadershipEvent
+}
 import mesosphere.marathon.health.HealthCheckManager
 import mesosphere.marathon.state._
 import mesosphere.marathon.tasks.TaskTracker
@@ -24,6 +31,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.matching.Regex
 import scala.util.{ Failure, Success, Try }
 
 class LockingFailedException(msg: String) extends Exception(msg)
@@ -56,10 +64,12 @@ class MarathonSchedulerActor private (
     historyActor = context.actorOf(historyActorProps, "HistoryActor")
 
     leaderInfo.subscribe(self)
+    eventBus.subscribe(self, classOf[MesosStatusUpdateEvent])
   }
 
   override def postStop(): Unit = {
     leaderInfo.unsubscribe(self)
+    eventBus.unsubscribe(self)
   }
 
   def receive: Receive = suspended
@@ -107,6 +117,9 @@ class MarathonSchedulerActor private (
 
     case ReconcileHealthChecks =>
       schedulerActions.reconcileHealthChecks()
+
+    case MesosStatusUpdateEvent(_, _, RescaleState(_), _, appId, _, _, _, _, _) =>
+      self ! ScaleApp(appId)
 
     case ScaleApps => schedulerActions.scaleApps()
 
@@ -342,6 +355,13 @@ object MarathonSchedulerActor {
 
   case object ScaleApps
 
+  private object RescaleState {
+    def unapply(state: String): Option[String] = state match {
+      case "TASK_ERROR" | "TASK_FAILED" | "TASK_KILLED" | "TASK_LOST" => Some(state)
+      case _ => None
+    }
+  }
+
   case class ScaleApp(appId: PathId) extends Command {
     def answer: Event = AppScaled(appId)
   }
@@ -513,7 +533,13 @@ class SchedulerActions(
     if (targetCount > currentCount) {
       log.info(s"Need to scale ${app.id} from $currentCount up to $targetCount instances")
 
-      val queuedOrRunning = taskQueue.get(app.id).map(_.totalTaskCount).getOrElse(currentCount)
+      val countsOpt: Option[QueuedTaskCount] = taskQueue.get(app.id)
+      countsOpt match {
+        case Some(counts) => log.info("Counts: {}", counts)
+        case None         => log.info("no queue entry for {} yet", app.id)
+      }
+
+      val queuedOrRunning = countsOpt.map(_.totalTaskCount).getOrElse(currentCount)
       val toQueue = targetCount - queuedOrRunning
 
       if (toQueue > 0) {

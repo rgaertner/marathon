@@ -2,7 +2,7 @@ package mesosphere.marathon.health
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
 import akka.event.EventStream
-import mesosphere.marathon.{ MarathonScheduler, MarathonSchedulerDriverHolder }
+import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.Protos.HealthCheckDefinition.Protocol
 import mesosphere.marathon.Protos.MarathonTask
 import mesosphere.marathon.event._
@@ -14,7 +14,6 @@ class HealthCheckActor(
     appId: PathId,
     appVersion: String,
     marathonSchedulerDriverHolder: MarathonSchedulerDriverHolder,
-    marathonScheduler: MarathonScheduler,
     healthCheck: HealthCheck,
     taskTracker: TaskTracker,
     eventBus: EventStream) extends Actor with ActorLogging {

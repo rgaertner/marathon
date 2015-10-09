@@ -5,7 +5,7 @@ import mesosphere.marathon.core.base.{ Clock, ShutdownHooks }
 import mesosphere.marathon.core.launchqueue.{ LaunchQueueConfig, LaunchQueueModule }
 import mesosphere.marathon.core.leadership.AlwaysElectedLeadershipModule
 import mesosphere.marathon.core.matcher.DummyOfferMatcherManager
-import mesosphere.marathon.core.task.bus.TaskBusModule
+import mesosphere.marathon.core.task.bus.{ TaskStatusEmitter, TaskBusModule }
 import mesosphere.marathon.integration.setup.WaitTestSupport
 import mesosphere.marathon.state.{ AppRepository, PathId }
 import mesosphere.marathon.tasks.TaskFactory.CreatedTask
@@ -182,7 +182,7 @@ class LaunchQueueModuleTest extends MarathonSpec with BeforeAndAfter with GivenW
   before {
     shutdownHooks = ShutdownHooks()
     clock = Clock()
-    taskBusModule = new TaskBusModule()
+    taskBusModule = new TaskBusModule(mock[TaskStatusEmitter])
 
     offerMatcherManager = new DummyOfferMatcherManager()
     taskTracker = mock[TaskTracker]("taskTracker")

@@ -75,7 +75,13 @@ class MarathonScheduler @Inject() (
     log.info("Received status update for task %s: %s (%s)"
       .format(status.getTaskId.getValue, status.getState, status.getMessage))
 
-    taskStatusEmitter.publish(TaskStatusUpdate(timestamp = clock.now(), status.getTaskId, MarathonTaskStatus(status)))
+    val update = TaskStatusUpdate(timestamp = clock.now(), status.getTaskId, MarathonTaskStatus(status))
+    taskStatusEmitter
+      .publish(update)
+      .onFailure {
+        case NonFatal(e) =>
+          log.error(s"while publishing update for task '${status.getTaskId.getValue}'", e)
+      }
   }
 
   override def frameworkMessage(

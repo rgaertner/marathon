@@ -246,21 +246,21 @@ private class AppTaskLauncherActor(
 
   private[this] def receiveTaskStatusUpdate: Receive = {
     case TaskStatusUpdate(_, taskId, MarathonTaskStatus.Terminal(_)) =>
-      log.debug("task '{}' finished", taskId.getValue)
+      log.info("task '{}' finished. {}", taskId.getValue, status)
       removeTask(taskId)
       if (app.constraints.nonEmpty) {
         maybeOfferReviver.foreach(_.reviveOffers())
       }
 
-    case TaskStatusUpdate(_, taskId, status) =>
+    case TaskStatusUpdate(_, taskId, taskStatus) =>
       runningTasksMap.get(taskId.getValue) match {
         case None =>
-          log.warning("ignore update of unknown task '{}'", taskId.getValue)
+          log.warning("ignore update of unknown task '{}'. {}", taskId.getValue, status)
         case Some(task) =>
-          log.debug("updating status of task '{}'", taskId.getValue)
+          log.info("updating status of task '{}'. {}", taskId.getValue, status)
 
           val taskBuilder = task.toBuilder
-          status.mesosStatus.foreach(taskBuilder.setStatus)
+          taskStatus.mesosStatus.foreach(taskBuilder.setStatus)
           val updatedTask = taskBuilder.build()
 
           runningTasks -= task
@@ -395,12 +395,16 @@ private class AppTaskLauncherActor(
   private[this] def shouldLaunchTasks: Boolean = tasksToLaunch > 0 && !backoffActive
 
   private[this] def status: String = {
+    log.info("running tasks: {}", runningTasksMap.keys.mkString(", "))
+
     val backoffStr = backOffUntil match {
-      case Some(backOffUntil) if backOffUntil > clock.now() => s"currently waiting for backoff($backOffUntil)"
-      case _ => "not backing off"
+      case Some(backOffUntil) if backOffUntil > clock.now() => s" currently waiting for backoff($backOffUntil)"
+      case _ => " not backing off"
     }
 
-    s"$tasksToLaunch tasksToLaunch, ${inFlightTaskLaunches.size} in flight. $backoffStr"
+    val tasksLaunchedOrRunning = runningTasks.size - inFlightTaskLaunches.size
+    s"$tasksLaunchedOrRunning tasksLaunchedOrRunning, $tasksToLaunch tasksToLaunch, " +
+      s"${inFlightTaskLaunches.size} in flight. target ${app.instances}.$backoffStr"
   }
 
   /** Manage registering this actor as offer matcher. Only register it if tasksToLaunch > 0. */

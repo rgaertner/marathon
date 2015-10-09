@@ -6,7 +6,7 @@ import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.event.EventStream
 import akka.pattern.ask
 import akka.util.Timeout
-import mesosphere.marathon.{ MarathonScheduler, MarathonSchedulerDriverHolder }
+import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.Protos.HealthCheckDefinition.Protocol
 import mesosphere.marathon.Protos.MarathonTask
 import mesosphere.marathon.event.{ AddHealthCheck, EventModule, RemoveHealthCheck }
@@ -17,14 +17,13 @@ import mesosphere.util.RWLock
 import mesosphere.util.ThreadPoolContext.context
 import org.apache.mesos.Protos.TaskStatus
 
+import scala.collection.immutable.{ Map, Seq }
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.immutable.{ Seq, Map }
 
 class MarathonHealthCheckManager @Inject() (
     system: ActorSystem,
-    scheduler: MarathonScheduler,
     driverHolder: MarathonSchedulerDriverHolder,
     @Named(EventModule.busName) eventBus: EventStream,
     taskTracker: TaskTracker,
@@ -61,7 +60,7 @@ class MarathonHealthCheckManager @Inject() (
         log.info(s"Adding health check for app [$appId] and version [$appVersion]: [$healthCheck]")
         val ref = system.actorOf(
           Props(classOf[HealthCheckActor],
-            appId, appVersion.toString, driverHolder, scheduler, healthCheck, taskTracker, eventBus))
+            appId, appVersion.toString, driverHolder, healthCheck, taskTracker, eventBus))
         val newHealthChecksForApp =
           healthChecksForApp + ActiveHealthCheck(healthCheck, ref)
 

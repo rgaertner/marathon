@@ -8,7 +8,7 @@ import org.scalatest.{ BeforeAndAfter, FunSuite }
 class TaskStatusModuleTest extends FunSuite with BeforeAndAfter {
   var module: TaskBusModule = _
   before {
-    module = new TaskBusModule
+    module = new TaskBusModule(DummyTaskStatusEmitter())
   }
 
   test("observable forAll includes all app status updates") {

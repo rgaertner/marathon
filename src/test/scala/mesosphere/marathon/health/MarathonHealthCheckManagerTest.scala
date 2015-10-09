@@ -48,7 +48,6 @@ class MarathonHealthCheckManagerTest extends MarathonSpec with Logging {
 
     hcManager = new MarathonHealthCheckManager(
       system,
-      mock[MarathonScheduler],
       new MarathonSchedulerDriverHolder,
       mock[EventStream],
       taskTracker,

@@ -23,6 +23,11 @@ object LaunchQueue {
       backOffUntil: Timestamp) {
     def waiting: Boolean = tasksLeftToLaunch != 0 || taskLaunchesInFlight != 0
     def totalTaskCount: Int = tasksLeftToLaunch + tasksLaunchedOrRunning + taskLaunchesInFlight
+
+    override def toString: String = {
+      s"QueuedTaskCount(${app.id}, tasksLeftToLaunch=$tasksLeftToLaunch, taskLaunchesInFlight=$taskLaunchesInFlight" +
+        s", tasksLaunchedOrRunning=$tasksLaunchedOrRunning, backOffUntil=$backOffUntil)"
+    }
   }
 }
 

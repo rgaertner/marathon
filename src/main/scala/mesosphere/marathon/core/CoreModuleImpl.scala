@@ -1,5 +1,7 @@
 package mesosphere.marathon.core
 
+import javax.inject.Named
+
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import mesosphere.marathon.api.LeaderInfo
@@ -9,7 +11,7 @@ import mesosphere.marathon.core.launcher.LauncherModule
 import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.matcher.manager.OfferMatcherManagerModule
-import mesosphere.marathon.core.task.bus.TaskBusModule
+import mesosphere.marathon.core.task.bus.{ TaskStatusEmitter, TaskBusModule }
 import mesosphere.marathon.core.task.tracker.TaskTrackerModule
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.AppRepository
@@ -26,6 +28,7 @@ import scala.util.Random
   */
 class CoreModuleImpl @Inject() (
     // external dependencies still wired by guice
+    @Named(CoreGuiceModule.NAMED_TASK_STATUS_LEGACY_EMITTER) taskStatusLegacyEmitter: TaskStatusEmitter,
     marathonConf: MarathonConf,
     metrics: Metrics,
     actorSystem: ActorSystem,
@@ -46,7 +49,7 @@ class CoreModuleImpl @Inject() (
 
   // TASKS
 
-  override lazy val taskBusModule = new TaskBusModule()
+  override lazy val taskBusModule = new TaskBusModule(taskStatusLegacyEmitter)
   override lazy val taskTrackerModule = new TaskTrackerModule(leadershipModule, clock)
 
   // OFFER MATCHING AND LAUNCHING TASKS
