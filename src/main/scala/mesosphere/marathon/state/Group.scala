@@ -110,11 +110,11 @@ case class Group(
     }
   }
 
-  def transitiveApps: Set[AppDefinition] = this.apps ++ groups.flatMap(_.transitiveApps)
+  lazy val transitiveApps: Set[AppDefinition] = this.apps ++ groups.flatMap(_.transitiveApps)
 
-  def transitiveGroups: Set[Group] = groups.flatMap(_.transitiveGroups) + this
+  lazy val transitiveGroups: Set[Group] = groups.flatMap(_.transitiveGroups) + this
 
-  def transitiveAppGroups: Set[Group] = transitiveGroups.filter(_.apps.nonEmpty)
+  lazy val transitiveAppGroups: Set[Group] = transitiveGroups.filter(_.apps.nonEmpty)
 
   @JsonIgnore
   lazy val applicationDependencies: List[(AppDefinition, AppDefinition)] = {
