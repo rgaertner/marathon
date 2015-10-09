@@ -11,6 +11,7 @@ import spray.revolver.RevolverPlugin.Revolver.{settings => revolverSettings}
 import sbtrelease._
 import ReleasePlugin._
 import ReleaseStateTransformations._
+import io.gatling.sbt.GatlingPlugin
 
 object MarathonBuild extends Build {
   lazy val root: Project = Project(
@@ -46,6 +47,18 @@ object MarathonBuild extends Build {
       testSettings ++
       integrationTestSettings
     ).dependsOn(root % "compile->compile; test->test").configs(IntegrationTest)
+
+  lazy val loadTesting: Project = Project(
+    id = "load-testing",
+    base = file("load-testing"),
+    settings = baseSettings ++
+//      formatSettings ++
+//      scalaStyleSettings ++
+      revolverSettings ++
+      Seq(
+        libraryDependencies ++= Dependencies.loadTesting
+      )
+  ).enablePlugins(GatlingPlugin)
 
   lazy val withFormatting = System.getProperty("sbt.log.format", "true").toBoolean
 
@@ -237,6 +250,11 @@ object Dependencies {
     Test.mockito % "test",
     Test.akkaTestKit % "test"
   )
+
+  val loadTesting = Seq(
+    Test.gatlingHighcharts % "test",
+    Test.gatlingTestFramework % "test"
+  )
 }
 
 object Dependency {
@@ -263,6 +281,7 @@ object Dependency {
     // test deps versions
     val Mockito = "1.9.5"
     val ScalaTest = "2.1.7"
+    val Gatling = "2.1.7"
   }
 
   val excludeMortbayJetty = ExclusionRule(organization = "org.mortbay.jetty")
@@ -295,5 +314,7 @@ object Dependency {
     val scalatest = "org.scalatest" %% "scalatest" % V.ScalaTest
     val mockito = "org.mockito" % "mockito-all" % V.Mockito
     val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % V.Akka
+    val gatlingHighcharts = "io.gatling.highcharts" % "gatling-charts-highcharts" % V.Gatling
+    val gatlingTestFramework = "io.gatling" % "gatling-test-framework" % V.Gatling
   }
 }

@@ -24,6 +24,10 @@ addSbtPlugin("ohnosequences" % "sbt-s3-resolver" % "0.10.1")
 
 resolvers += Classpaths.sbtPluginReleases
 
+// testing
+
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.4")
 
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0")
+
+addSbtPlugin("io.gatling" % "gatling-sbt" % "2.1.7")
