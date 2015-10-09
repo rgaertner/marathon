@@ -16,12 +16,12 @@ class MarathonSimulation extends Simulation {
     .acceptEncodingHeader("gzip, deflate")
     .userAgentHeader("Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0")
 
-  val totalDuration = 60.seconds
+  val totalDuration = 180.seconds
 
   setUp(
     UIUser.index.inject(rampUsers(20).over(10.seconds)),
     ServiceDiscovery.viaTasks.inject(rampUsers(3).over(10.seconds)),
-    AppConfigurator.runApp.inject(constantUsersPerSec(1).during(totalDuration-10.seconds)),
+    AppConfigurator.runApp.inject(constantUsersPerSec(2).during(totalDuration-10.seconds)),
     AppConfigurator.deployAndRevert.inject(constantUsersPerSec(1).during(totalDuration-10.seconds))
   ).protocols(httpConf).maxDuration(totalDuration)
 }
